@@ -23,10 +23,11 @@ export default async function handler(req, res) {
   try {
     const { message } = req.body;
 
-    // सीधे गूगल के ऑफ़िशियल REST API एंडपॉइंट को हिट करें (बिना किसी हेडर कन्फ्यूजन के)
-    //const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
-    // ✅ नया यूआरएल (इसे बदलें):
     const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey.trim()}`;
+    
+    // जेमिनी को प्रॉम्प्ट निर्देश कि वह जवाब के साथ सजेशन्स भी फ़ॉर्मेट में दे
+    const systemInstruction = "You are Yatrix AI, a helpful spiritual travel assistant for the Braj region. Answer the user's question nicely. CRITICAL RULE: At the very end of your response, you MUST always add exactly one line with 3 short relevant follow-up options or questions in the user's language using this exact format: \\n\\nSUGGESTIONS: Option 1 | Option 2 | Option 3";
+
     const response = await fetch(googleUrl, {
       method: 'POST',
       headers: {
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
         contents: [
           {
             parts: [
-              { text: message }
+              { text: `${systemInstruction}\n\nUser Message: ${message}` }
             ]
           }
         ]
@@ -52,7 +53,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // गूगल से टेक्स्ट रिस्पॉन्स निकालें
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
     
     return res.status(200).json({ reply });
