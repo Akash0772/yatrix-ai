@@ -24,8 +24,9 @@ export default async function handler(req, res) {
     const { message } = req.body;
 
     // सीधे गूगल के ऑफ़िशियल REST API एंडपॉइंट को हिट करें (बिना किसी हेडर कन्फ्यूजन के)
-    const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
-
+    //const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
+    // ✅ नया यूआरएल (इसे बदलें):
+    const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey.trim()}`;
     const response = await fetch(googleUrl, {
       method: 'POST',
       headers: {
