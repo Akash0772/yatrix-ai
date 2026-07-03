@@ -1,5 +1,4 @@
 /* eslint-env node */
-import { GoogleGenAI } from '@google/genai';
 
 export default async function handler(req, res) {
   // CORS Headers
@@ -22,22 +21,43 @@ export default async function handler(req, res) {
   }
 
   try {
-    // नया SDK नई AQ वाली चाबियों को बिना किसी एरर के स्वीकार करता है
-    const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
-    
     const { message } = req.body;
 
-    // नए SDK का सही मॉडल और कंटेंट जनरेशन मेथड
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: message,
+    // सीधे गूगल के ऑफ़िशियल REST API एंडपॉइंट को हिट करें (बिना किसी हेडर कन्फ्यूजन के)
+    const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
+
+    const response = await fetch(googleUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: message }
+            ]
+          }
+        ]
+      })
     });
 
-    const reply = response.text;
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Google API Error Response:", data);
+      return res.status(response.status).json({ 
+        error: data.error?.message || "Google API responded with an error" 
+      });
+    }
+
+    // गूगल से टेक्स्ट रिस्पॉन्स निकालें
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text found.";
+    
     return res.status(200).json({ reply });
 
   } catch (error) {
-    console.error("Gemini Error:", error);
-    return res.status(500).json({ error: error.message || "Proxy Error" });
+    console.error("Fetch Proxy Error:", error);
+    return res.status(500).json({ error: error.message || "Proxy Fetch Error" });
   }
 }
