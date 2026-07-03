@@ -1,8 +1,7 @@
 /* eslint-env node */
-// ES import हटाकर CommonJS require का उपयोग करें
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,31 +16,23 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  // 1. API Key निकालें
   const apiKey = process.env.VITE_GEMINI_API_KEY;
-  
   if (!apiKey) {
     return res.status(500).json({ error: "Server Error: API Key missing in Vercel environment." });
   }
 
   try {
-    // 2. जेमिनी इनिशियलाइज़ करें
     const genAI = new GoogleGenerativeAI(apiKey.trim());
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
     const { message } = req.body;
-
-    // 3. रिपॉन्स जनरेट करें
     const result = await model.generateContent(message);
     const response = await result.response;
     const reply = response.text();
 
     return res.status(200).json({ reply });
-
   } catch (error) {
     console.error("Gemini Error:", error);
-    return res.status(500).json({ 
-      error: error.message || "Something went wrong on the proxy server" 
-    });
+    return res.status(500).json({ error: error.message || "Proxy Error" });
   }
-};
+}
