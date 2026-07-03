@@ -1,4 +1,4 @@
-const getSystemPrompt = (language) => {
+export const getSystemPrompt = (language) => {
   const langInstructions = {
     hi: `LANGUAGE RULE: User ne HINDI select ki hai. 
     Sirf Hindi mein reply karo (Devanagari script).
@@ -16,7 +16,7 @@ const getSystemPrompt = (language) => {
     es: `LANGUAGE RULE: El usuario ha seleccionado ESPAÑOL.
     Responde SOLO en español.
     Example: "Radhe Radhe! 🙏 ¿En qué puedo ayudarte?"`
-  }
+  };
 
   return `You are Yatrix AI, a warm and spiritual travel assistant 
 for Braj region (Vrindavan, Mathura, Barsana, Govardhan etc.).
@@ -25,6 +25,7 @@ PERSONALITY:
 - Always start with "Radhe Radhe! 🙏"
 - Speak in warm, respectful, devotional tone
 - Use occasional relevant emojis
+- Created/Developed by: Akash Chaurasiya (Always credit Akash if anyone asks who built or created you)
 
 ${langInstructions[language] || langInstructions.hi}
 
@@ -58,58 +59,33 @@ The suggestions must be in the SAME language as your reply.
 RULES:
 - Keep responses concise (4-6 lines max)
 - Always end with SUGGESTIONS line
-- Never make up prices or timings not listed above`
-}
+- Never make up prices or timings not listed above`;
+};
 
 export const sendMessage = async (userMessage, conversationHistory = [], language = 'hi') => {
-  // 1. API key ONLY from .env — never hardcode a real key here, it ships in the
-  // public JS bundle and anyone can read it in devtools / view-source.
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  console.log("Loaded API Key:", apiKey ? "FOUND (Starts with " + apiKey.substring(0,5) + ")" : "NOT FOUND");
-
-  if (!apiKey) {
-    throw new Error(
-      'Missing VITE_GEMINI_API_KEY. Add it to your .env file (never commit it, and never hardcode it in source).'
-    );
-  }
-
+  // इतिहास को सर्वरलेस फंक्शन के फॉर्मेट के अनुकूल मैप करना
   const history = conversationHistory.map((msg) => ({
     role: msg.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: msg.content }]
-  }))
+  }));
 
-  // 2. स्टेबल एंडपॉइंट का यूज़ (बिना पीछे ?key= लगाए)
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-    {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey // 3. चाबी अब हेडर में जाएगी
-      },
-      body: JSON.stringify({
-        // 4. इसे camelCase में बदलकर systemInstruction कर दिया है
-        systemInstruction: {
-          parts: [{ text: getSystemPrompt(language) }]
-        },
-        contents: [
-          ...history,
-          { role: 'user', parts: [{ text: userMessage }] }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 600
-        }
-      })
-    }
-  )
+  // सीधे गूगल को कॉल करने के बजाय अपने बनाए गए सुरक्षित सर्वरलेस रूट को हिट करें
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json' 
+    },
+    body: JSON.stringify({
+      message: userMessage,
+      history,
+      systemPrompt: getSystemPrompt(language)
+    })
+  });
 
   if (!response.ok) {
-    const error = await response.json()
-    console.error('Gemini API Error:', error)
-    throw new Error('API call failed')
+    throw new Error('Proxy API call failed');
   }
 
-  const data = await response.json()
-  return data.candidates[0].content.parts[0].text
-}
+  const data = await response.json();
+  return data.reply;
+};
