@@ -16,23 +16,19 @@ export default async function handler(req, res) {
   try {
     const { history, systemPrompt } = req.body
 
-    // ✅ Backend mein VITE_ prefix nahi hota
     const apiKey = process.env.GEMINI_API_KEY
 
     if (!apiKey) {
-      return res.status(500).json({ 
-        error: 'GEMINI_API_KEY missing in Vercel Environment Variables' 
-      })
+      return res.status(500).json({ error: 'GEMINI_API_KEY missing' })
     }
 
+    // ✅ Google Cloud key ke liye alag URL format
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
-      
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           systemInstruction: {
