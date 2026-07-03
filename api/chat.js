@@ -1,5 +1,5 @@
 /* eslint-env node */
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 export default async function handler(req, res) {
   // CORS Headers
@@ -22,15 +22,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey.trim());
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // नया SDK नई AQ वाली चाबियों को बिना किसी एरर के स्वीकार करता है
+    const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
     
     const { message } = req.body;
-    const result = await model.generateContent(message);
-    const response = await result.response;
-    const reply = response.text();
 
+    // नए SDK का सही मॉडल और कंटेंट जनरेशन मेथड
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: message,
+    });
+
+    const reply = response.text;
     return res.status(200).json({ reply });
+
   } catch (error) {
     console.error("Gemini Error:", error);
     return res.status(500).json({ error: error.message || "Proxy Error" });
