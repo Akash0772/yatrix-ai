@@ -1,60 +1,47 @@
 /* eslint-env node */
+import { GoogleGenAI } from '@google/genai'; // या जो भी पैकेज आप यूज़ कर रहे हैं
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).end()
+    res.status(200).end();
+    return;
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+  // 1. पक्का करें कि चाबी लोड हो रही है
+  const apiKey = process.env.VITE_GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    return res.status(500).json({ error: "Server Error: API Key missing in Vercel environment." });
   }
 
   try {
-    const { history, systemPrompt } = req.body
+    // 2. जेमिनी को चाबी एकदम साफ़ तरीके से पास करें (Explicitly pass apiKey)
+    const ai = new GoogleGenAI({ apiKey: apiKey.trim() }); // .trim() स्पेस हटा देगा
+    
+    const { message, history } = req.body;
 
-    const apiKey = process.env.VITE_GEMINI_API_KEY
+    // यहाँ अपना पुराना चैट जनरेशन वाला लॉजिक रखें, उदाहरण के लिए:
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash', // या जो भी मॉडल आप यूज़ कर रहे हैं
+      contents: message,
+    });
 
-    if (!apiKey) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY missing' })
-    }
-
-    // ✅ Google Cloud key ke liye alag URL format
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          },
-          contents: history,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 600
-          }
-        })
-      }
-    )
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      console.error('Gemini Error:', errorData)
-      return res.status(response.status).json(errorData)
-    }
-
-    const data = await response.json()
-    const reply = data.candidates[0].content.parts[0].text
-    return res.status(200).json({ reply })
+    const reply = response.text;
+    return res.status(200).json({ reply });
 
   } catch (error) {
-    console.error('Server Error:', error)
-    return res.status(500).json({ error: 'Internal server error' })
+    console.error("Gemini Error:", error);
+    return res.status(error.status || 500).json({ 
+      error: error.message || "Something went wrong on the proxy server" 
+    });
   }
 }
