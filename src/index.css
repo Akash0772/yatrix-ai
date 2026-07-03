@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+:root {
+  --navy: #0A0F2C;
+  --navy-light: #0D1440;
+  --navy-mid: #111854;
+  --gold: #C9921A;
+  --gold-light: #E8B84B;
+  --gold-pale: #FFF8E7;
+  --cream: #FFFDF5;
+  --white: #FFFFFF;
+}
+
+/* IMPORTANT: this reset MUST live inside @layer base.
+   Tailwind v4 puts its own utilities (mx-auto, px-*, gap-*, etc.) inside
+   CSS cascade layers. Any CSS written OUTSIDE a layer always wins over
+   layered CSS, regardless of specificity — so an unlayered "* { margin:0 }"
+   silently zeroes out every Tailwind margin/padding utility on the whole
+   site. Wrapping it in @layer base fixes centering, spacing, everything. */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--navy);
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+html { scroll-behavior: smooth; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,146,26,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(201,146,26,0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes rotateSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-pulse-gold { animation: pulse-gold 2s infinite; }
+.animate-fadeInUp { animation: fadeInUp 0.8s ease forwards; }
+
+.gold-text {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--gold));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+.gold-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.gold-divider::before,
+.gold-divider::after {
+  content: '';
+  flex: 1;
+  max-width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+
+.gold-divider::after {
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+.card-dark {
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid rgba(201,146,26,0.15);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-dark:hover {
+  background: linear-gradient(135deg, rgba(201,146,26,0.08) 0%, rgba(13,20,64,0.4) 100%);
+  border-color: var(--gold-light);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(201,146,26,0.2);
+}
+
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--duration, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+.divine-glow-1 {
+  background: radial-gradient(circle, rgba(201,146,26,0.12) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
+.divine-glow-2 {
+  background: radial-gradient(circle, rgba(17,24,84,0.6) 0%, transparent 70%);
+  filter: blur(50px);
+}
+
+.avatar-frame {
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(201,146,26,0.05) 100%);
+  border: 1px solid rgba(201,146,26,0.2);
+  box-shadow: 0 0 40px rgba(201,146,26,0.15), inset 0 0 20px rgba(255,255,255,0.05);
+}
