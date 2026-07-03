@@ -1,5 +1,5 @@
 /* eslint-env node */
-import { GoogleGenAI } from '@google/genai'; // या जो भी पैकेज आप यूज़ कर रहे हैं
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export default async function handler(req, res) {
   // CORS Headers
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  // 1. पक्का करें कि चाबी लोड हो रही है
+  // 1. Vercel Environment से API Key निकालें
   const apiKey = process.env.VITE_GEMINI_API_KEY;
   
   if (!apiKey) {
@@ -24,23 +24,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 2. जेमिनी को चाबी एकदम साफ़ तरीके से पास करें (Explicitly pass apiKey)
-    const ai = new GoogleGenAI({ apiKey: apiKey.trim() }); // .trim() स्पेस हटा देगा
+    // 2. आपके प्रोजेक्ट के सही पैकेज (@google/generative-ai) के साथ इनिशियलाइज़ करें
+    const genAI = new GoogleGenerativeAI(apiKey.trim());
     
-    const { message, history } = req.body;
+    // प्रोजेक्ट में जो भी मॉडल यूज़ हो रहा था (जैसे gemini-1.5-flash या gemini-pro)
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    
+    const { message } = req.body;
 
-    // यहाँ अपना पुराना चैट जनरेशन वाला लॉजिक रखें, उदाहरण के लिए:
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', // या जो भी मॉडल आप यूज़ कर रहे हैं
-      contents: message,
-    });
+    // 3. कंटेंट जनरेट करें
+    const result = await model.generateContent(message);
+    const response = await result.response;
+    const reply = response.text();
 
-    const reply = response.text;
     return res.status(200).json({ reply });
 
   } catch (error) {
     console.error("Gemini Error:", error);
-    return res.status(error.status || 500).json({ 
+    return res.status(500).json({ 
       error: error.message || "Something went wrong on the proxy server" 
     });
   }
